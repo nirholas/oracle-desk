@@ -1,0 +1,583 @@
+/******************************************************************************
+ * three.ws: Canonical Design Tokens (B01)
+ * ════════════════════════════════════════════════════════════════════════════
+ * THE single source of truth for every design primitive on the platform:
+ * colour, surface, ink, stroke, spacing, type, radius, shadow, blur, motion.
+ *
+ * One vocabulary, not eight. The per-surface namespaces (--mk-* / --pd-* /
+ * --ibm-* / --gx-* / --ho-* / --saas-* / --sdk-* / --t-*) were removed in B02;
+ * do NOT reintroduce a parallel palette. A surface that needs a distinct brand
+ * accent (e.g. IBM Carbon blue at /ibm/*) expresses it as a small theme layer
+ * that REMAPS these tokens: never a standalone set.
+ *
+ * Loading: imported by public/style.css and public/nav.css, so it reaches every
+ * page (full-stylesheet pages via style.css; nav-only / embed surfaces via
+ * nav.css). New pages need only ensure one of those is linked.
+ *
+ * Rule: reference tokens by name (var(--surface-1), var(--space-md), …). Never
+ * hardcode a hex/rgba/px that an existing token already expresses. See
+ * DESIGN-TOKENS.md for the full vocabulary and migration guidance.
+ * Monochrome on near-black + golden-ratio (φ = 1.618) spacing & type.
+ ******************************************************************************/
+
+/* ── Universal [hidden] guard ─────────────────────────────────────────────────
+ * The `hidden` HTML attribute hides an element via the UA rule `[hidden]{display:none}`.
+ * That rule has specificity (0,1,0) and loses to ANY component rule that sets
+ * `display` on a class/id (e.g. `.modal{display:grid}`): at which point a `hidden`
+ * element renders anyway. A full-screen overlay authored that way then covers the
+ * page and swallows every click (this is exactly how the Brain Studio modal once
+ * blocked /agent-studio#brain).
+ *
+ * tokens.css is imported by BOTH style.css and nav.css, so it reaches every surface.
+ * Defining the guard here: with `!important` so it beats base-class `display`: makes
+ * `hidden` authoritative platform-wide. Components no longer depend on each page
+ * carrying its own copy. To SHOW a toggled element, remove the attribute (the
+ * intended API) or gate visibility on `:not([hidden])`; never lean on a bare
+ * `display` that a stray `hidden` can't override.
+ *
+ * Enforced by scripts/audit-hidden-guard.mjs (every page must resolve this guard)
+ * and tests/e2e/studio-overlay.spec.js (the studio stays click-through at rest). */
+[hidden] {
+	display: none !important;
+}
+
+/* ── Screen-reader-only utility ──────────────────────────────────────────────
+ * Visually removes an element while keeping it in the accessibility tree (the
+ * WCAG-standard clip technique): unlike `display:none`/`[hidden]`, which strip
+ * it from the tree entirely. Use for labels, skip-links at rest, and live-region
+ * status text that must be announced but not seen. `.screen-reader-only` is a
+ * synonym kept for existing markup. A focusable element with this class reveals
+ * itself on focus via the paired `:focus`/`:focus-visible` rule (skip links). */
+.sr-only,
+.screen-reader-only {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	padding: 0 !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	clip-path: inset(50%) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+}
+.sr-only-focusable:focus,
+.sr-only-focusable:focus-visible {
+	position: fixed !important;
+	width: auto !important;
+	height: auto !important;
+	margin: 0 !important;
+	overflow: visible !important;
+	clip: auto !important;
+	clip-path: none !important;
+	white-space: normal !important;
+}
+
+:root {
+	/* Phi ratio */
+	--phi: 1.618;
+
+	/* Spacing scale (each step × φ) */
+	--space-3xs: 0.146rem; /* ~2.3px  */
+	--space-2xs: 0.236rem; /* ~3.8px  */
+	--space-xs: 0.382rem; /* ~6.1px  */
+	--space-sm: 0.618rem; /* ~9.9px  */
+	--space-md: 1rem; /* 16px    */
+	--space-lg: 1.618rem; /* ~25.9px */
+	--space-xl: 2.618rem; /* ~41.9px */
+	--space-2xl: 4.236rem; /* ~67.8px */
+
+	/* Typography scale
+	 * Two registers in one ladder:
+	 *  · dense UI band (2xs→ui): fixed px-honest rungs for chrome/labels/body,
+	 *    where the product actually lives (nav, dashboard, cards). These fill the
+	 *    gap the phi steps skip; they are the homes for 11/13/14px text.
+	 *  · display band (base→3xl): phi-spaced (×φ) for marketing headers.
+	 * Migrate hardcoded px to the nearest rung; never reintroduce raw px. */
+	--text-2xs: 0.6875rem; /* 11px: micro: pills, badges, hints, timestamps */
+	--text-xs: 0.618rem; /* ~9.9px: smallest decorative label */
+	--text-sm: 0.764rem; /* ~12.2px: small UI labels, captions */
+	--text-md: 0.8125rem; /* 13px: dense UI body (the most common size) */
+	--text-ui: 0.875rem; /* 14px: nav links, controls, comfortable UI */
+	--text-base: 1rem; /* 16px: reading body baseline */
+	--text-lg: 1.236rem; /* ~19.8px: small headings (×φ) */
+	--text-xl: 1.618rem; /* ~25.9px: section headings (×φ) */
+	--text-2xl: 2.618rem; /* ~41.9px: hero / display (×φ) */
+	--text-3xl: 4.236rem; /* ~67.8px: oversized marketing display (×φ) */
+
+	/* Font weights: one ladder, referenced by the heading/body classes below */
+	--weight-regular: 400;
+	--weight-medium: 500;
+	--weight-semibold: 600;
+	--weight-bold: 700;
+
+	/* Line heights: golden ratio */
+	--leading-tight: 1.382;
+	--leading-normal: 1.618;
+	--leading-loose: 2.058;
+
+	/* Radii: 4-token scale (B09). Every rounded corner on the site maps to one
+	   of exactly these four; do not introduce ad-hoc px radii.
+	     sm   small controls, inputs, chips, tags        (6px)
+	     md   buttons & interactive controls             (10px, = dashboard control)
+	     lg   cards, panels, modals                      (14px, = dashboard card)
+	     pill fully-rounded pills (circles use 50%)       (999px)
+	   The legacy semantic names --radius-card / --radius-control are kept below as
+	   thin aliases so existing consumers keep working; new code uses sm/md/lg/pill. */
+	--radius-sm: 6px;
+	--radius-md: 10px;
+	--radius-lg: 14px;
+	--radius-pill: 999px;
+
+	/* Header height */
+	--header-h: 3.5rem;
+
+	/* Font stacks: families are self-hosted in /fonts/fonts.css */
+	--font-display: 'Space Grotesk', 'Space Grotesk Fallback', 'Inter', system-ui, sans-serif;
+	--font-body: 'Inter', 'Inter Fallback', system-ui, sans-serif;
+	--font-mono: 'JetBrains Mono', 'JetBrains Mono Fallback', 'SF Mono', 'Fira Code', ui-monospace, monospace;
+
+	/* Accent */
+	--accent: #ffffff;
+	--accent-soft: rgba(255, 255, 255, 0.10);
+
+	/* Gold brand channel (B08): the reused features/optional-tier gold. Stored as
+	   raw RGB channels so every translucent variant references one source:
+	   rgba(var(--gold-rgb), <alpha>). Keeps the many alpha tints on a single token
+	   without collapsing them to one opacity. */
+	--gold-rgb: 255, 215, 0;
+
+	/* Surface system: mirrors the /dashboard (dashboard-next) palette so every
+	   surface across the site reads as one product. Monochrome glass on near-black,
+	   soft 14px cards, semantic green/red/amber. Reference these instead of
+	   hand-rolling rgba()s so future pages stay on-brand. */
+	--surface-glass: linear-gradient(180deg, rgba(20, 21, 28, 0.7), rgba(14, 15, 22, 0.5));
+	--surface-1: rgba(255, 255, 255, 0.03);
+	--surface-2: rgba(255, 255, 255, 0.05);
+	--surface-3: rgba(255, 255, 255, 0.08);
+	--stroke: rgba(255, 255, 255, 0.08);
+	--stroke-strong: rgba(255, 255, 255, 0.14);
+	/* Hairline dividers: a touch softer than --stroke, for in-card row/cell
+	   separators (tables, stat strips). The light theme defines these below; the
+	   dark base was missing them, so bare var(--hairline) rows rendered borderless
+	   here. Translucent white keeps them on the surface/stroke scale. */
+	--hairline: rgba(255, 255, 255, 0.055);
+	--hairline-strong: rgba(255, 255, 255, 0.09);
+	--ink: #e8e8e8;
+	--ink-dim: #888888;
+	--radius-card:    var(--radius-lg); /* legacy alias → lg */
+	--radius-control: var(--radius-md); /* legacy alias → md */
+	--success: #4ade80;
+	--danger: #f87171;
+	--warn: #fbbf24;
+
+	/* Violet accent pair (QB-07). The pale violet that marks identity, agent and
+	   on-chain surfaces was only ever named for the wallet, so every OTHER surface
+	   reaching for the same hue hardcoded it: payments, integrations, gestures,
+	   genome and galaxy among them. Those copies never flipped for the light
+	   theme, where the pale rung measures 1.7:1 and the text is unreadable.
+	   Naming the pair at platform level gives them a destination; the --wallet-*
+	   names below are now thin aliases of it (the sanctioned --nxt-* / --nv-*
+	   pattern), so wallet UI is unchanged.
+	     accent-violet         default violet ink / chip text
+	     accent-violet-strong  emphasized fill, vanity glyphs, chart series */
+	--accent-violet:        #c4b5fd;
+	--accent-violet-strong: #a78bfa;
+
+	/* Wallet identity accent: the violet family that marks every wallet surface
+	   (chip, HUD, vanity studio) as one coherent system across the app. Route all
+	   wallet UI through these tokens rather than scattering raw rgba(139,92,246,…).
+	     accent      default chip text / glow
+	     accent-soft chip fill (low alpha)
+	     stroke      chip border
+	     hi          vanity-highlighted address glyphs (pure white) */
+	--wallet-accent:        var(--accent-violet);
+	--wallet-accent-strong: var(--accent-violet-strong);
+	--wallet-accent-soft:   rgba(139, 92, 246, 0.10);
+	--wallet-accent-fill:   rgba(139, 92, 246, 0.15);
+	--wallet-stroke:        rgba(139, 92, 246, 0.30);
+	--wallet-stroke-strong: rgba(139, 92, 246, 0.50);
+	--wallet-glow:          rgba(139, 92, 246, 0.45);
+	--wallet-focus:         rgba(139, 92, 246, 0.70); /* focus ring on wallet controls */
+
+	/* Solid near-black backgrounds: opaque counterparts to the translucent
+	   --surface-* overlays. Use these for solid page/panel fills instead of
+	   hand-typing var(--bg-0) / var(--bg-1) so the monochrome base stays consistent. */
+	--bg-0: #0a0a0a; /* deepest page background */
+	--bg-1: #1a1a1a; /* raised solid panel/control */
+
+	/* Ink tiers (B01 additions): completes the text-colour ramp so headings and
+	   muted captions stop hardcoding #fff / rgba whites.
+	     bright  pure-white headings & primary CTA labels
+	     ink     default body text (above)
+	     dim     secondary/muted text (above)
+	     faint   tertiary hints, disabled, watermark labels */
+	--ink-bright: #ffffff;
+	/* 0.55, not 0.45: on the #0a0a0a shell 0.45 composites to ~4.2:1, under
+	   the 4.5:1 WCAG AA floor axe enforces on hint text; 0.55 measures 6.1:1.
+	   (Genuinely disabled controls are exempt from AA and can dim further via
+	   opacity at the component level.) */
+	--ink-faint:  rgba(255, 255, 255, 0.55);
+
+	/* Scrim + on-scrim ink (B14): the one part of the palette that must NOT flip
+	   with the theme. A scrim sits on top of MEDIA (a screenshot, a video frame, a
+	   3D canvas, a modal backdrop), not on a page surface, so its job is legibility
+	   over unknown pixels: it stays dark and its ink stays light in both themes.
+	   Before this existed the platform had 400+ hand-rolled rgba(0,0,0,…) overlays
+	   clustered around four values; these four ARE that cluster, deduped.
+	     soft    gradient legibility wash under captions
+	     scrim   standard chip / label resting on media
+	     strong  hover or pressed state of the above, heavy caption bars
+	     modal   full-screen backdrop behind a dialog or lightbox
+	   Pair with --on-scrim* for text and hairlines; never with --ink*, which flips. */
+	--scrim-soft:   rgba(0, 0, 0, 0.35);
+	--scrim:        rgba(0, 0, 0, 0.55);
+	--scrim-strong: rgba(0, 0, 0, 0.78);
+	--scrim-modal:  rgba(0, 0, 0, 0.60);
+	--on-scrim-bright: #ffffff;
+	--on-scrim:        rgba(255, 255, 255, 0.82);
+	--on-scrim-dim:    rgba(255, 255, 255, 0.64);
+	--on-scrim-stroke: rgba(255, 255, 255, 0.16);
+
+	/* Elevation / shadow (B01): three depth tiers. Mirrors the component layer
+	   in style.css so any surface can express depth without hand-rolling shadows.
+	     1 = resting panel · 2 = card · 3 = lifted / hover / modal */
+	--shadow-1: 0 1px 3px rgba(0, 0, 0, 0.30);
+	--shadow-2: 0 4px 24px rgba(0, 0, 0, 0.40), 0 1px 4px rgba(0, 0, 0, 0.20);
+	--shadow-3: 0 8px 32px rgba(0, 0, 0, 0.50), 0 1px 4px rgba(0, 0, 0, 0.20);
+
+	/* Blur (B01): backdrop-filter glass tiers. Pair with a --surface-* fill.
+	     sm  subtle chrome (sticky bars, chips)
+	     md  standard glass panels / docks
+	     lg  heavy modal / overlay scrim glass */
+	--blur-sm: 8px;
+	--blur-md: 16px;
+	--blur-lg: 28px;
+
+	/* Skeleton (QB-07). The loading-shimmer primitives. They used to live in
+	   style.css, so a page that only injects the shared nav (nav.css imports this
+	   sheet, not style.css) could not resolve them and hand-rolled its own grey
+	   gradient instead; those literals then stayed dark on the light theme. Here
+	   they resolve on every token-covered page and flip with the theme.
+	   Monochrome on purpose so a skeleton reads on any surface tier. */
+	--skeleton-base:   rgba(255, 255, 255, 0.04);
+	--skeleton-sheen:  rgba(255, 255, 255, 0.08);
+	--skeleton-radius: var(--radius-md);
+
+	/* Stage (QB-07). The backdrop a 3D viewport, avatar thumbnail or model modal
+	   renders against. Like the scrim family it is deliberately theme-INVARIANT:
+	   a rendered model reads against a dark studio ground in either theme, and
+	   flipping it white would blow out every light-coloured avatar. It replaces a
+	   six-value near-black ramp (#000, #050505, #0a0a0a, #0d0d0d, #0e0e0e,
+	   #242424) that had drifted across three pages. Use it ONLY behind media; a
+	   normal panel is --bg-0 / --bg-1 and must flip. */
+	--stage-black: #000000;
+	--stage-deep:  #050505;
+	--stage:       #0a0a0a;
+	--stage-lift:  #0d0d0d;
+	--stage-glow:  #242424;
+
+	/* Ink ON the accent fill (QB-07). A primary CTA paints var(--accent) and needs
+	   the opposite ink; every surface that wanted one hand-typed #0a0a0a, which
+	   stayed black when the light theme remaps --accent to a real blue, giving
+	   black-on-blue at 2.2:1. The value is always the page ground, so it flips
+	   with the theme and one name serves buttons, chips, badges and pills. */
+	--on-accent: #0a0a0a;
+
+	/* Ink on a permanently BRIGHT fill (QB-07). The mirror of the --on-scrim
+	   family, and theme-invariant for the same reason: a white dock button or a
+	   vivid gradient CTA stays bright in both themes, so its ink must stay dark.
+	   Distinct from --on-accent, which sits on var(--accent) and DOES flip. */
+	--on-bright: #0a0a0a;
+
+	/* Motion (B01): one duration ladder + named easings. Compose as
+	   `transition: <prop> var(--duration-fast) var(--ease-standard);`
+	   Respect prefers-reduced-motion at the component level. */
+	--duration-instant: 80ms;  /* state flips: hover tint, focus ring */
+	--duration-fast:    140ms; /* controls: buttons, toggles, tabs */
+	--duration-base:    220ms; /* panels, dropdowns, cards */
+	--duration-slow:    420ms; /* page/section reveals, large moves */
+	--ease-standard:   cubic-bezier(0.2, 0.8, 0.2, 1);  /* default UI motion */
+	--ease-emphasized: cubic-bezier(0.22, 1, 0.36, 1);  /* expressive enter/reveal */
+	--ease-out:        cubic-bezier(0, 0, 0.2, 1);       /* decelerate-only */
+
+	/* Interactive states (B11): shared focus-ring + disabled vocabulary.
+	   Every :focus-visible outline and disabled control on the platform
+	   references these (buttons.css re-declares them with identical literal
+	   fallbacks so it stays portable on pages that load it standalone). */
+	--focus-ring-color:  var(--accent);
+	--focus-ring-width:  2px;
+	--focus-ring-offset: 2px;
+	--disabled-opacity:  0.4;
+	--disabled-cursor:   not-allowed;
+
+	/* Theme: the default (no [data-theme]) is the brand dark palette above.
+	   color-scheme tells the UA to paint native form controls, scrollbars and
+	   the canvas in the matching scheme. The theme-switcher sets data-theme on
+	   <html>; an inline boot script (scripts/inject-theme-boot.mjs) applies it
+	   before first paint so there is no flash. See [data-theme='light'] below. */
+	color-scheme: dark;
+}
+/* ── Injected-nav height reservation ──────────────────────────────────────
+   nav.js renders the shared header into an empty `<div id="nav-container">`
+   after the page has already painted, and it injects nav.css at the same
+   time. A page whose only render-blocking stylesheet is style.css therefore
+   painted with a zero-height container and then dropped its whole <main> by
+   the header's height the moment the nav landed: one 0.83 layout shift, which
+   was the entire measured CLS on /forge. tokens.css is imported by BOTH
+   style.css and nav.css, so putting the reservation here reaches every
+   surface, render-blocking, before the first paint. `:empty` stops matching as
+   soon as the header is in, so the real header owns its height from then on.
+   Keep --nav-h equal to the rendered `.nav` height in nav.css.
+
+   --nav-h is the rendered height of that injected header, and it is NOT the
+   same number as --header-h (3.5rem / 56px), which sizes the older in-page
+   `<header>` element. A full-screen surface that pins itself under the shared
+   nav must offset by --nav-h: offsetting by --header-h leaves the top 13px of
+   the surface painted behind the nav, which is how Scene Studio's File/Edit/
+   Add menubar row shipped with its glyph tops sliced off. */
+:root { --nav-h: 69px; }
+#nav-container:empty { min-height: var(--nav-h); }
+@media (max-width: 880px) {
+	:root { --nav-h: 65px; }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+ * INTERACTIVE-STATE FLOOR (B14)
+ * The tokens above name a focus ring and a disabled treatment, but naming them
+ * only helps the components that remember to reach for them. A sweep of the
+ * platform found ~1,500 selectors that declare `cursor: pointer` yet define no
+ * focus-visible or disabled rule at all: keyboard users landed on them with no
+ * visible ring, and disabled controls looked identical to live ones.
+ *
+ * These two rules close that gap once, for every page, because tokens.css is
+ * imported by both style.css and nav.css. They are wrapped in `:where()`, which
+ * forces their specificity to (0,0,0), so they are a FLOOR, never a ceiling:
+ * any component rule, however weakly written, still overrides them. Nothing
+ * that already styles its own focus or disabled state changes appearance.
+ *
+ * Scope note: `:focus-visible` fires on keyboard/assistive focus only, so this
+ * adds no ring to mouse clicks. A component that wants no ring should re-style
+ * it (a different colour, an inset shadow), not remove it.
+ * ════════════════════════════════════════════════════════════════════════════ */
+:where(
+	a[href],
+	area[href],
+	button,
+	input,
+	select,
+	textarea,
+	summary,
+	[tabindex]:not([tabindex='-1']),
+	[role='button'],
+	[role='link'],
+	[role='tab'],
+	[role='menuitem'],
+	[role='menuitemcheckbox'],
+	[role='menuitemradio'],
+	[role='option'],
+	[role='checkbox'],
+	[role='radio'],
+	[role='switch'],
+	[role='slider'],
+	[role='textbox']
+):focus-visible {
+	outline: var(--focus-ring-width) solid var(--focus-ring-color);
+	outline-offset: var(--focus-ring-offset);
+}
+
+/* Disabled floor. Covers both the native attribute and the ARIA state, since
+   custom controls (div/span with role=button) can only express the latter. */
+:where(button, input, select, textarea, fieldset, optgroup, option)[disabled],
+:where([aria-disabled='true']) {
+	opacity: var(--disabled-opacity);
+	cursor: var(--disabled-cursor);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+ * SEMANTIC ALIAS LAYER (B12)
+ * Thin, theme-agnostic synonyms layered ON TOP of the primitives above: the
+ * same sanctioned pattern as --nxt-* (app shell) and --nv-* (nav): every value
+ * resolves *to* a canonical token via var(); nothing here introduces a new
+ * colour, surface, or scale. They exist so page authors can reach for an
+ * intention-named token (--color-accent, --color-danger) and so common UI px
+ * values map 1:1 to a named spacing rung without re-hardcoding the literal.
+ *
+ * Because the colour aliases point at the remapped primitives (--bg-0, --ink,
+ * --accent …), they flip automatically under [data-theme='light'] with zero
+ * extra declarations: do NOT re-list them in the light block.
+ * ════════════════════════════════════════════════════════════════════════════ */
+:root {
+	/* Colour: semantic synonyms for the canonical primitives. */
+	--color-bg:         var(--bg-0);        /* deepest page background */
+	--color-surface:    var(--surface-1);   /* default raised glass fill */
+	--color-surface-2:  var(--surface-2);   /* hover / nested surface */
+	--color-text:       var(--ink);         /* default body ink */
+	--color-text-bright: var(--ink-bright); /* headings / primary labels */
+	--color-text-dim:   var(--ink-dim);     /* secondary / muted text */
+	--color-text-faint: var(--ink-faint);   /* tertiary hints / disabled */
+	--color-accent:     var(--accent);      /* brand accent (CTA fill / focus) */
+	--color-border:     var(--stroke);      /* default hairline / control border */
+	--color-border-strong: var(--stroke-strong);
+	--color-hairline:   var(--stroke);      /* divider rules */
+	--color-danger:     var(--danger);      /* destructive / error / sell */
+	--color-success:    var(--success);     /* positive / confirm / buy */
+	--color-warning:    var(--warn);        /* caution / pending */
+
+	/* Spacing: 4px UI grid (B12). Complements the phi display scale above:
+	   phi (--space-sm/md/lg…) sizes marketing rhythm; this linear ramp gives the
+	   product chrome exact 4px-multiple rungs so dense layouts (nav, cards,
+	   forms) migrate hardcoded 8/12/16/24/32px to a token WITHOUT shifting a
+	   pixel. Pick the ramp that already matches the value you're replacing. */
+	--space-1: 4px;
+	--space-2: 8px;
+	--space-3: 12px;
+	--space-4: 16px;
+	--space-5: 20px;
+	--space-6: 24px;
+	--space-7: 28px;
+	--space-8: 32px;
+
+	/* Radius: fully-rounded alias (pills/circles), completing the sm/md/lg set. */
+	--radius-full: var(--radius-pill);
+
+	/* Motion: short duration synonyms over the canonical ladder. --ease-out is
+	   already defined above; these just name the two most-reached durations. */
+	--dur-fast: var(--duration-fast); /* 140ms: controls */
+	--dur-med:  var(--duration-base); /* 220ms: panels / dropdowns */
+}
+
+/* Explicit dark: identical to :root, so toggling data-theme="dark" is a no-op
+   on the palette but still drives color-scheme + the [data-theme] attribute the
+   switcher reads back. Keep in lockstep with :root. */
+:root[data-theme='dark'] {
+	color-scheme: dark;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+ * LIGHT THEME
+ * The single alternate palette. It REMAPS the colour primitives above to a
+ * light surface system: it never introduces a parallel namespace (same rule
+ * as the per-surface namespaces removed in B02). Every token-driven surface
+ * flips automatically; surfaces that still hardcode colours render as dark
+ * islands until migrated to tokens (tracked follow-up, see DESIGN-TOKENS.md).
+ *
+ * Two values can't survive a straight flip and are remapped here too:
+ *   · --accent was pure white (white-fill primary CTA). On light that is
+ *     invisible, so light uses a real accent blue + white CTA ink.
+ *   · Button/elevation tokens that hardcoded white/black are re-pointed.
+ * ════════════════════════════════════════════════════════════════════════════ */
+:root[data-theme='light'] {
+	color-scheme: light;
+
+	/* Solid canvas + raised panel */
+	--bg-0: #ffffff;
+	--bg-1: #f3f4f6;
+
+	/* Glass + translucent surface ramp (dark ink tint on light, mirrors the
+	   dark palette's white tint on black) */
+	--surface-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(244, 245, 248, 0.72));
+	--surface-1: rgba(15, 18, 28, 0.035);
+	--surface-2: rgba(15, 18, 28, 0.06);
+	--surface-3: rgba(15, 18, 28, 0.09);
+	--stroke: rgba(15, 18, 28, 0.10);
+	--stroke-strong: rgba(15, 18, 28, 0.16);
+
+	/* Ink ramp: dark text on light */
+	--ink-bright: #0a0c12;
+	--ink: #1d212b;
+	--ink-dim: #5a616f;
+	/* 0.62, not 0.45: on white 0.45 composites to ~3.5:1; 0.62 measures 5.5:1. */
+	--ink-faint: rgba(15, 18, 28, 0.62);
+
+	/* Accent: white is invisible on light, so light gets a real accent. */
+	--accent: #2563eb;
+	--accent-soft: rgba(37, 99, 235, 0.10);
+	--on-accent: #ffffff;
+
+	/* Elevation: softer, cooler shadows on a light canvas */
+	--shadow-1: 0 1px 3px rgba(15, 18, 28, 0.08);
+	--shadow-2: 0 4px 24px rgba(15, 18, 28, 0.10), 0 1px 4px rgba(15, 18, 28, 0.06);
+	--shadow-3: 0 8px 32px rgba(15, 18, 28, 0.14), 0 1px 4px rgba(15, 18, 28, 0.08);
+
+	/* Button component tokens that hardcoded white/near-black in style.css.
+	   Primary becomes accent-fill with white ink; the white-tint hovers on
+	   secondary/ghost become dark tints so they read on a light surface. */
+	--btn-primary-fg:          #ffffff;
+	--btn-primary-bg-hover:     #1d4ed8;
+	--btn-primary-bg-active:    #1e40af;
+	--btn-secondary-bg-hover:  rgba(15, 18, 28, 0.10);
+	--btn-secondary-bg-active: rgba(15, 18, 28, 0.14);
+
+	/* Nav source vars: nav.css derives its --nv-* layer from these (with dark
+	   literal fallbacks), so remapping them here flips the shared header too. */
+	--bg: #ffffff;
+	--hairline: rgba(15, 18, 28, 0.10);
+	--hairline-strong: rgba(15, 18, 28, 0.16);
+	--text: #1d212b;
+	--text-2: #5a616f;
+	--text-3: #888f9c;
+	--text-4: #aab0bc;
+	--nv-bar-bg: rgba(255, 255, 255, 0.82);
+
+	/* Violet accent pair, and through the --wallet-* aliases every wallet surface
+	   with it. The dark palette's pale violets (#c4b5fd text, #a78bfa vanity) were
+	   never remapped for light, so every wallet chip on a light surface rendered
+	   its address at 1.7:1 against the card: unreadable, and well under the 4.5:1
+	   AA floor for the 11px type it uses. Darkening the two ink tokens to the
+	   violet-600/700 rungs keeps the violet identity that marks wallet and
+	   identity UI across the app and measures 5.3:1 and 6.6:1. Remapping the
+	   PRIMITIVE rather than the wallet alias is what carries the fix to the
+	   non-wallet surfaces (payments, integrations, gestures, genome, galaxy) that
+	   now reference var(--accent-violet) directly. The fills, strokes and glow are
+	   alpha-based on the same 139,92,246 hue and already composite correctly on a
+	   light canvas, so they stay put. */
+	--accent-violet:        #6d28d9;
+	--accent-violet-strong: #5b21b6;
+
+	/* Skeleton on light. A white-tint shimmer is invisible on a white canvas, so
+	   the ramp inverts to a dark tint at the same two alphas. */
+	--skeleton-base:   rgba(15, 18, 28, 0.06);
+	--skeleton-sheen:  rgba(15, 18, 28, 0.11);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--duration-instant: 0ms;
+		--duration-fast: 0ms;
+		--duration-base: 0ms;
+		--duration-slow: 0ms;
+	}
+
+	/* Reduced-motion floor (B14). Zeroing the duration tokens above only reaches
+	   motion that was authored through them. A sweep found 26 stylesheets with
+	   @keyframes and no reduced-motion block at all, plus hundreds of inline
+	   transitions with literal durations, so a user who asks for less motion
+	   still got shimmer, slides and parallax on those surfaces. This collapses
+	   the remainder in one place. `!important` is required to beat the literal
+	   declarations it exists to override.
+
+	   Deliberate carve-outs, because "reduce" does not mean "remove status":
+	     1. data-motion="essential" (or the .motion-keep class) and its subtree
+	        opts out. Use it where the movement IS the information, not decoration.
+	     2. Busy/progress indicators keep animating. A spinner frozen mid-rotation
+	        reads as a hung page, which is a worse outcome than the motion. The
+	        substring class match covers the ~28 differently-named spinner classes
+	        across the platform without maintaining a list of them. */
+	/* The exempt list is repeated per pseudo-element because a pseudo is selected
+	   through its originating element; there is no shorter correct spelling. */
+	*:not(.motion-keep, .motion-keep *, [data-motion='essential'], [data-motion='essential'] *, [aria-busy='true'], [aria-busy='true'] *, [role='progressbar'], [class*='spin'], [class*='loader']),
+	*:not(.motion-keep, .motion-keep *, [data-motion='essential'], [data-motion='essential'] *, [aria-busy='true'], [aria-busy='true'] *, [role='progressbar'], [class*='spin'], [class*='loader'])::before,
+	*:not(.motion-keep, .motion-keep *, [data-motion='essential'], [data-motion='essential'] *, [aria-busy='true'], [aria-busy='true'] *, [role='progressbar'], [class*='spin'], [class*='loader'])::after {
+		animation-duration: 1ms !important;
+		animation-delay: 0ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 1ms !important;
+		transition-delay: 0ms !important;
+	}
+
+	html {
+		scroll-behavior: auto !important;
+	}
+}

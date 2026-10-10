@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Oracle Desk</title>
+	<meta name="description" content="An autonomous pump.fun trading desk run on the three.ws Oracle: six desks and a head of desk that fires its own strategies on realized P&L." />
+	<link rel="icon" href="/favicon.ico" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<link rel="stylesheet" href="/tokens.css" />
+	<link rel="stylesheet" href="/desk.css" />
+</head>
+<body>
+	<a class="skip" href="#main">Skip to the desk</a>
+	<header class="nav">
+		<div class="nav-inner">
+			<a class="brand" href="https://three.ws" rel="noopener">
+				<img class="brand-mark" src="/three.svg" alt="" width="24" height="24" />
+				<span>three.ws</span>
+			</a>
+			<span class="crumb" aria-hidden="true">/</span>
+			<span class="product">Oracle Desk</span>
+			<nav class="nav-main" aria-label="three.ws">
+				<a href="https://three.ws/oracle" rel="noopener">Oracle</a>
+				<a href="https://three.ws/oracle-lab" rel="noopener">Model</a>
+				<a href="https://three.ws/oracle/docs" rel="noopener">Docs</a>
+			</nav>
+			<span class="mode" id="modePill" data-mode="">connecting</span>
+		</div>
+	</header>
+
+	<main id="main" class="wrap" tabindex="-1">
+		<div class="banner" id="banner" role="status" hidden></div>
+
+		<section class="hero" aria-labelledby="heroTitle">
+			<span class="eyebrow"><i id="liveDot" class="off"></i><span id="eyebrowText">connecting to the desk</span></span>
+			<h1 id="heroTitle">Six desks. One head. <span>Real launches.</span></h1>
+			<p>Every pump.fun launch runs through radar, research, risk and execution. Every trade is graded on realized P&amp;L, and the head of desk fires the strategy seat that loses and rewrites it from its own record. Scored live by the <a class="inline" href="https://three.ws/oracle" rel="noopener">three.ws Oracle</a>.</p>
+			<div class="statline" id="statline" aria-live="off">
+				<div class="stat skel-stat"></div><div class="stat skel-stat"></div><div class="stat skel-stat"></div><div class="stat skel-stat"></div><div class="stat skel-stat"></div><div class="stat skel-stat"></div>
+			</div>
+			<div class="actions">
+				<button class="btn" id="pauseBtn" type="button" disabled>Pause entries</button>
+				<button class="btn ghost" id="reviewBtn" type="button" disabled>Run head review now</button>
+			</div>
+		</section>
+
+		<section class="card funnel-card" aria-labelledby="funnelTitle">
+			<div class="card-head">
+				<h2 id="funnelTitle">The funnel</h2>
+				<p class="sub">Most coins die in research. That is the point.</p>
+			</div>
+			<ol class="funnel" id="funnel"><li class="skel-row"></li><li class="skel-row"></li><li class="skel-row"></li></ol>
+			<div class="kills" id="kills"></div>
+		</section>
+
+		<section aria-labelledby="orgTitle">
+			<div class="section-head">
+				<h2 id="orgTitle">The desk</h2>
+				<p class="sub">Radar sees everything and buys nothing. Risk outranks everyone, the head included.</p>
+			</div>
+			<article class="card head-card" id="headCard" aria-label="Head of desk"><div class="skel-block"></div></article>
+			<div class="org" id="org">
+				<div class="card skel-card"></div><div class="card skel-card"></div><div class="card skel-card"></div>
+				<div class="card skel-card"></div><div class="card skel-card"></div><div class="card skel-card"></div>
+			</div>
+		</section>
+
+		<section class="card" aria-labelledby="posTitle">
+			<div class="card-head">
+				<h2 id="posTitle">Positions <span class="ct" id="posCount"></span></h2>
+				<p class="sub">Marked to the real sell quote every few seconds. Bags are house money, riding after the stake came back.</p>
+			</div>
+			<div class="table-wrap" id="positions"><div class="skel-block"></div></div>
+		</section>
+
+		<section aria-labelledby="bookTitle">
+			<h2 id="bookTitle" class="sr-only">Desk records</h2>
+			<div class="tabs" role="tablist" aria-label="Desk records">
+				<button class="tab on" role="tab" id="tab-tape" aria-selected="true" aria-controls="view-tape" data-view="tape">Tape</button>
+				<button class="tab" role="tab" id="tab-trades" aria-selected="false" aria-controls="view-trades" data-view="trades" tabindex="-1">Trades <span class="ct" id="tradeCount"></span></button>
+				<button class="tab" role="tab" id="tab-matrix" aria-selected="false" aria-controls="view-matrix" data-view="matrix" tabindex="-1">Matrix revisions <span class="ct" id="revCount"></span></button>
+				<button class="tab" role="tab" id="tab-head" aria-selected="false" aria-controls="view-head" data-view="head" tabindex="-1">Head decisions <span class="ct" id="decCount"></span></button>
+			</div>
+			<div class="view on" id="view-tape" role="tabpanel" aria-labelledby="tab-tape"><ol class="tape" id="tape"></ol></div>
+			<div class="view" id="view-trades" role="tabpanel" aria-labelledby="tab-trades" hidden><div class="table-wrap" id="trades"></div></div>
+			<div class="view" id="view-matrix" role="tabpanel" aria-labelledby="tab-matrix" hidden><ol class="revs" id="revisions"></ol></div>
+			<div class="view" id="view-head" role="tabpanel" aria-labelledby="tab-head" hidden><ol class="revs" id="decisions"></ol></div>
+		</section>
+
+		<footer class="foot">
+			<span>Scores by the <a href="https://three.ws/oracle" rel="noopener">three.ws Oracle</a>, model published at <a href="https://three.ws/oracle-lab" rel="noopener">Oracle Lab</a>.</span>
+			<span id="modelLine"></span>
+			<span>Paper mode signs nothing. Live mode trades real funds from your own keypair; memecoins can go to zero.</span>
+		</footer>
+	</main>
+
+	<dialog class="confirm" id="confirm" aria-labelledby="confirmTitle">
+		<form method="dialog">
+			<h3 id="confirmTitle">Sell this position?</h3>
+			<p id="confirmBody"></p>
+			<div class="confirm-actions">
+				<button class="btn ghost" value="cancel">Keep it</button>
+				<button class="btn danger" value="ok" id="confirmOk">Sell everything</button>
+			</div>
+		</form>
+	</dialog>
+
+	<script type="module" src="/desk.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+{
+	"head": {
+		"review_every_minutes": 60,
+		"fire_below_score": 0.4,
+		"min_trades_to_judge": 4,
+		"cooldown_minutes": 360,
+		"promote_step": 0.2,
+		"max_budget": 2.0
+	},
+	"research": {
+		"seats": [
+			{
+				"id": "PRIME",
+				"thesis": "Only the top of the ladder: Prime-tier conviction with low rug and give-back risk.",
+				"checks": { "min_score": 85, "max_rug_risk": 20, "max_give_back": 40, "max_age_s": 900 }
+			},
+			{
+				"id": "MOMENTUM",
+				"thesis": "Early flow: strong buying pressure the momentum pillar can measure.",
+				"checks": { "min_score": 70, "min_momentum": 70, "max_rug_risk": 30, "max_age_s": 600 }
+			},
+			{
+				"id": "STRUCTURE",
+				"thesis": "Clean holder structure and a creator with a record, even if the tape is quiet.",
+				"checks": { "min_score": 65, "min_structure": 40, "min_pedigree": 30, "max_rug_risk": 15, "max_age_s": 1200 }
+			},
+			{
+				"id": "SMART-MONEY",
+				"thesis": "Follow wallets with a proven record into launches the Oracle already likes.",
+				"checks": { "min_score": 60, "min_smart_wallets": 1, "max_rug_risk": 25, "max_age_s": 900 }
+			}
+		]
+	},
+	"risk": {
+		"base_size_sol": 0.1,
+		"max_position_fraction": 0.1,
+		"max_open_positions": 3,
+		"max_entries_per_hour": 6,
+		"daily_loss_cap_sol": 1.0,
+		"max_price_impact_pct": 3,
+		"min_pool_real_sol": 10,
+		"min_wallet_reserve_sol": 0.05,
+		"slippage_pct": 5
+	},
+	"exits": {
+		"stop_loss_pct": 35,
+		"trailing_stop_pct": 25,
+		"initials_out_multiple": 2,
+		"moonbag_min_pct": 15,
+		"take_profit_pct": null,
+		"max_hold_minutes": 45,
+		"liquidity_decay_seconds": 180,
+		"sweep_every_seconds": 5
+	},
+	"treasury": {
+		"sweep_every_minutes": 360,
+		"keep_multiple_of_start": 1.5,
+		"freeze_below_fraction": 0.6,
+		"unfreeze_at_fraction": 0.9
+	},
+	"radar": {
+		"feed_poll_seconds": 30
+	}
+}

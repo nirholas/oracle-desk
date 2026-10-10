@@ -1,0 +1,39 @@
+{
+	"name": "oracle-desk",
+	"version": "1.0.0",
+	"private": true,
+	"description": "An autonomous pump.fun trading desk run on the three.ws Oracle: six desks and a head of desk that fires its own strategies on realized P&L. Paper by default, live on your own keypair.",
+	"type": "module",
+	"bin": {
+		"oracle-desk": "bin/oracle-desk.js"
+	},
+	"scripts": {
+		"start": "node bin/oracle-desk.js run",
+		"status": "node bin/oracle-desk.js status",
+		"test": "node --test test/*.test.js"
+	},
+	"dependencies": {
+		"@anthropic-ai/sdk": "^0.129.0",
+		"@pump-fun/pump-sdk": "^4.0.0",
+		"@pump-fun/pump-swap-sdk": "^2.1.0",
+		"@solana/spl-token": "^0.4.15",
+		"@solana/web3.js": "^1.99.0",
+		"@three-ws/oracle-model": "^0.1.0",
+		"bn.js": "^5.2.5",
+		"bs58": "^6.0.0",
+		"eventsource": "^5.1.2",
+		"ws": "^8.22.0"
+	},
+	"engines": {
+		"node": ">=20.12"
+	},
+	"keywords": [
+		"solana",
+		"trading-desk",
+		"autonomous-agents",
+		"oracle",
+		"three.ws"
+	],
+	"homepage": "https://three.ws/oracle",
+	"license": "Apache-2.0"
+}
