@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: "oracle-desk"
+abstract: "Self-custody autonomous trading desk for Solana launches: radar, research seats, risk desk, execution, audit loop and a head of desk that fires losing strategies. Paper by default."
+license: Apache-2.0
+repository-code: "https://github.com/nirholas/oracle-desk"
+url: "https://three.ws"
+authors:
+  - name: three.ws
+    website: "https://three.ws"
